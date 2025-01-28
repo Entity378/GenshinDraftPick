@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            margin-top: 50px;
+            font-size: 2em;
+            color: #333;
+        }
+
+        .container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 500px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            font-size: 1.1em;
+        }
+
+        li {
+            padding: 5px 0;
+        }
+
+        .room-id {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            word-break: break-word;
+            display: inline-block;
+        }
+
+        .copy-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .copy-message {
+            margin-top: 10px;
+            color: green;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Benvenuto nella Lobby</h1>
+    <div class="container">
+        <h2>ID Stanza</h2>
+        <div class="room-id" id="room-id"></div>
+        <button class="copy-btn" id="copy-btn">Copia ID Stanza</button>
+        <div class="copy-message" id="copy-message" style="display: none;">ID copiato negli appunti!</div>
+
+        <h2>Partecipanti</h2>
+        <ul id="participants"></ul>
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const roomId = window.location.pathname.split("/")[2];
+        const username = new URLSearchParams(window.location.search).get("username");
+
+        const roomIdDiv = document.getElementById("room-id");
+        const copyBtn = document.getElementById("copy-btn");
+        const copyMessage = document.getElementById("copy-message");
+
+        const participantsList = document.getElementById("participants");
+        // Mostra l'ID della stanza
+        roomIdDiv.textContent = roomId;
+
+        // Funzionalità  di copia
+        copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(roomId).then(() => {
+                copyMessage.style.display = "block";
+                setTimeout(() => {
+                    copyMessage.style.display = "none";
+                }, 2000);
+            }).catch((err) => {
+                console.error("Errore nella copia dell'ID:", err);
+            });
+        });
+
+        // Unisciti alla stanza con l'username
+        socket.emit("join-room", roomId, username);
+
+        // Aggiorna l'elenco dei partecipanti
+        socket.on("update-participants", (participants) => {
+            console.log("Partecipanti aggiornati:", participants);
+
+            // Svuota e aggiorna la lista dei partecipanti
+            participantsList.innerHTML = "";
+            participants.forEach((user) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = user.username;
+                participantsList.appendChild(listItem);
+            });
+        });
+    </script>
+</body>
+
+</html>
