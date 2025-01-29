@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Lobby</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Chat</h2>
+        <div id="chat-box"></div>
+        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." />
+        <button id="send-btn">Invia</button>
+
+        <h2>Partecipanti</h2>
+        <ul id="participants"></ul>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const roomId = window.location.pathname.split("/")[2];
+        const username = new URLSearchParams(window.location.search).get("username");
+
+        const chatBox = document.getElementById("chat-box");
+        const chatInput = document.getElementById("chat-input");
+        const sendBtn = document.getElementById("send-btn");
+        const participantsList = document.getElementById("participants");
+
+        socket.emit("join-game", roomId, username);
+
+        socket.on("chat-message", (message) => {
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        sendBtn.addEventListener("click", () => {
+            const message = chatInput.value;
+            if (message) {
+                socket.emit("send-chat-message", roomId, message);
+                chatInput.value = "";
+            }
+        });
+
+        socket.on("update-participants", (participants) => {
+            participantsList.innerHTML = "";
+            participants.forEach((user) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = user.username;
+                participantsList.appendChild(listItem);
+            });
+        });
+
+        socket.on("user-disconnected", (username) => {
+            console.log(username + " si è disconnesso");
+        });
+    </script>
+</body>
+</html>
