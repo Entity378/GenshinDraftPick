@@ -9,7 +9,6 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const rooms = {}; // Oggetto per tracciare i partecipanti nelle stanze
-const usernames = {}; // Memorizza gli username
 
 // Serve i file statici
 app.use(express.static("public"));
@@ -22,26 +21,46 @@ app.get("/", (req, res) => {
 
 // Route per creare una nuova stanza
 app.get("/create", (req, res) => {
-    const roomId = uuidv4(); // Genera un ID univoco per la stanza
-    const username = req.query.username; // Leggi l'username dalla query string
+    const roomId = uuidv4();
+    const username = req.query.username;
+
     if (username) {
         rooms[roomId] = [];
-        res.redirect(`/room/${roomId}?username=${username}`); // Reindirizza alla stanza
+        res.redirect(`/room/${roomId}?username=${username}`);
     } else {
-        res.status(400).send("Username mancante.");
+        res.send(`
+            <script>
+                alert("Username mancante.");
+                window.location.href = "/";
+            </script>
+        `);
     }
 });
 
 // Route per gestire le lobbies
 app.get("/room/:roomId", (req, res) => {
     const roomId = req.params.roomId;
-    
-    if (rooms[roomId]) {
-        res.sendFile(path.join(__dirname, "public", "lobby.html")); // Carica la pagina della lobby
+    const username = req.query.username;
+
+    if (!rooms[roomId]) {
+        res.send(`
+            <script>
+                alert("Stanza non trovata.");
+                window.location.href = "/";
+            </script>
+        `);
+    } else if (rooms[roomId].find(user => user.username === username)) {
+        res.send(`
+            <script>
+                alert("Username già preso in questa stanza.");
+                window.location.href = "/";
+            </script>
+        `);
     } else {
-        res.status(404).send("Stanza non trovata."); // Restituisci errore se la stanza non esiste
+        res.sendFile(path.join(__dirname, "public", "lobby.html"));
     }
 });
+
 
 // Socket.IO logica di connessione
 io.on("connection", (socket) => {
@@ -67,6 +86,9 @@ io.on("connection", (socket) => {
                 if (rooms[roomId]) {
                     rooms[roomId] = rooms[roomId].filter((user) => user.id !== socket.id);
                     io.to(roomId).emit("update-participants", rooms[roomId]);
+
+                    // Notifica agli altri utenti che un partecipante si è disconnesso
+                    io.to(roomId).emit("user-disconnected", username);
 
                     // Elimina la stanza se vuota
                     if (rooms[roomId].length === 0) {

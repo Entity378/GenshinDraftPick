@@ -71,6 +71,20 @@
             color: green;
             font-size: 0.9em;
         }
+
+        .start-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .start-btn:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 
@@ -81,6 +95,8 @@
         <div class="room-id" id="room-id"></div>
         <button class="copy-btn" id="copy-btn">Copia ID Stanza</button>
         <div class="copy-message" id="copy-message" style="display: none;">ID copiato negli appunti!</div>
+
+        <button id="start-btn" class="start-btn" style="display: none;">Inizia Gioco</button>
 
         <h2>Partecipanti</h2>
         <ul id="participants"></ul>
@@ -96,12 +112,14 @@
         const roomIdDiv = document.getElementById("room-id");
         const copyBtn = document.getElementById("copy-btn");
         const copyMessage = document.getElementById("copy-message");
-
         const participantsList = document.getElementById("participants");
+        const startButtonContainer = document.createElement("div");
+        let startButton;
+
         // Mostra l'ID della stanza
         roomIdDiv.textContent = roomId;
 
-        // Funzionalità  di copia
+        // Funzionalità di copia
         copyBtn.addEventListener("click", () => {
             navigator.clipboard.writeText(roomId).then(() => {
                 copyMessage.style.display = "block";
@@ -122,11 +140,38 @@
 
             // Svuota e aggiorna la lista dei partecipanti
             participantsList.innerHTML = "";
-            participants.forEach((user) => {
+            participants.forEach((user, index) => {
                 const listItem = document.createElement("li");
                 listItem.textContent = user.username;
                 participantsList.appendChild(listItem);
+
+                // Aggiungi il pulsante "Start" solo al primo partecipante
+                if (index === 0 && user.username === username) {
+                    // Crea il pulsante "Start"
+                    if (!startButton) {
+                        startButton = document.createElement("button");
+                        startButton.textContent = "Start";
+                        startButton.classList.add("start-btn");
+                        startButton.addEventListener("click", () => {
+                            console.log("Stanza avviata!");
+                            // Logica per avviare la stanza, ad esempio, inviare un messaggio agli altri
+                        });
+                        startButtonContainer.appendChild(startButton);
+                        document.body.appendChild(startButtonContainer);
+                    }
+                } else if (index != 0 && user.username === username) {
+                    // Rimuovi il pulsante "Start" se non è il primo
+                    if (startButton) {
+                        startButtonContainer.removeChild(startButton);
+                        startButton = null;
+                    }
+                }
             });
+        });
+
+        // Gestisce la disconnessione di un utente
+        socket.on("user-disconnected", (username) => {
+            console.log(username + " si è disconnesso");
         });
     </script>
 </body>

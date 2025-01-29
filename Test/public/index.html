@@ -66,6 +66,9 @@
     </div>
 
     <script>
+        // Connessione al server tramite Socket.io
+        const socket = io();
+
         function createRoom() {
             const username = document.getElementById("username").value;
             if (username) {
@@ -84,6 +87,11 @@
                 alert("Per favore, inserisci un nome utente e un ID di stanza.");
             }
         }
+
+        // Ascolta per il messaggio di errore
+        socket.on("error", (message) => {
+            alert(message);
+        });
     </script>
 </body>
 
