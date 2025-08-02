@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Lobby</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
+
 <body>
     <div class="container">
+        <div class="bansNumber" id="bansNumber"></div>
+        <div class="teamsNumber" id="teamsNumber"></div>
         <h2>Chat</h2>
         <div id="chat-box"></div>
         <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." />
@@ -27,6 +31,8 @@
         const chatInput = document.getElementById("chat-input");
         const sendBtn = document.getElementById("send-btn");
         const participantsList = document.getElementById("participants");
+        const bansNumberText = document.getElementById("bansNumber");
+        const teamsNumberText = document.getElementById("teamsNumber");
 
         socket.emit("join-game", roomId, username);
 
@@ -54,9 +60,15 @@
             });
         });
 
+        socket.on("update-bans-teams-number", (bansNumber, teamsNumber) => {
+            bansNumberText.innerHTML = `Numero di ban: ${bansNumber}`;
+            teamsNumberText.innerHTML = `Numero di squadre: ${teamsNumber}`;
+        });
+
         socket.on("user-disconnected", (username) => {
             console.log(username + " si è disconnesso");
         });
     </script>
 </body>
+
 </html>

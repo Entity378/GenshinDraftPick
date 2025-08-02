@@ -54,6 +54,8 @@ app.get("/room/:roomId", (req, res) => {
                 window.location.href = "/";
             </script>`
         );
+    } else if (connectedGames[roomId]) {
+        res.redirect(`/game/${roomId}?username=${username}`);
     } else {
         res.sendFile(path.join(__dirname, "public", "lobby.html"));
     }
@@ -67,6 +69,13 @@ app.get("/game/:roomId", (req, res) => {
         res.send(
             `<script>
                 alert("Stanza non trovata.");
+                window.location.href = "/";
+            // </script>`
+        );
+    } else if (connectedGames[roomId] && connectedGames[roomId].find(user => user.username === username)) {
+        res.send(
+            `<script>
+                alert("Username già preso in questa stanza.");
                 window.location.href = "/";
             </script>`
         );
@@ -89,9 +98,22 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("start-game", (roomId) => {
-        games[roomId] = rooms[roomId];
-        io.to(roomId).emit("redirect-to-game");
+    // Modifica solo l'handler "start-game" così:
+    socket.on("start-game", (roomId, username, bansNumber, teamsNumber, blueSideUsername, redSideUsername) => {
+        if (rooms[roomId][0].username == username) {
+            games[roomId] = {
+                participants: [...rooms[roomId]],  // Copia i partecipanti
+                blueSideUsername: blueSideUsername,
+                redSideUsername: redSideUsername,
+                bansNumber: bansNumber,
+                teamsNumber: teamsNumber
+            };
+            console.log(`${username} (${socket.id}) ha iniziato la partita ${roomId} (${blueSideUsername} vs ${redSideUsername}) con ${bansNumber} ban e ${teamsNumber} team.`);
+            io.to(roomId).emit("redirect-to-game");
+        }
+        else {
+            console.log(`${username} (${socket.id}) ha provato ad iniziare una partita senza essere il creatore della stanza.`);
+        }
     });
 
     socket.on("join-game", (roomId, username) => {
@@ -105,7 +127,8 @@ io.on("connection", (socket) => {
             socket.join(roomId);
             console.log(`${username} (${socket.id}) si è unito alla lobby di gioco ${roomId}`);
 
-            // Invia i partecipanti aggiornati
+            console.log(`DIOBESTIA ${roomId} con ${games[roomId].bansNumber} ban e ${games[roomId].teamsNumber} team.`);
+            io.to(roomId).emit("update-bans-teams-number", games[roomId].bansNumber, games[roomId].teamsNumber);
             io.to(roomId).emit("update-participants", connectedGames[roomId]);
         }
     });
@@ -118,7 +141,7 @@ io.on("connection", (socket) => {
                 connectedGames[roomId].splice(userIndex, 1);
                 io.to(roomId).emit("update-participants", connectedGames[roomId]);
                 io.to(roomId).emit("user-disconnected", username);
-                
+
                 if (connectedGames[roomId].length === 0) {
                     delete connectedGames[roomId];
                     delete games[roomId];
