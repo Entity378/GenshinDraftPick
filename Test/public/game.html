@@ -18,7 +18,9 @@
 
     <!-- Container sinistro -->
     <div class="side-container left">
-      <!-- Contenuto opzionale -->
+      <h2 id="blue-username" style="text-align: center">Blue</h2>
+      <div id="blue-team-bans" class="blue-team-bans"></div>
+      <div id="blue-team-picks" class="blue-team-picks"></div>
     </div>
 
     <!-- Container principale -->
@@ -28,14 +30,19 @@
       <div id="characters-box">
         <div id="characters-list"></div>
       </div>
+      <button id="submit-btn" class="submit-btn" onclick="sumbitCharacter()">Seleziona</button>
+      <div id="current-phase" class="current-phase"></div>
     </div>
 
     <!-- Container destro -->
     <div class="side-container right">
+      <h2 id="red-username" style="text-align: center">Red</h2>
+      <div id="red-team-bans" class="red-team-bans"></div>
+      <div id="red-team-picks" class="red-team-picks"></div>
       <!-- Contenuto opzionale -->
-      <div class="bansNumber" id="bansNumber"></div>
-      <div class="teamsNumber" id="teamsNumber"></div>
-      <ul id="participants"></ul>
+      <!-- <div class="bansNumber" id="bansNumber"></div> -->
+      <!-- <div class="teamsNumber" id="teamsNumber"></div> -->
+      <!-- <ul id="participants"></ul> -->
     </div>
   </div>
 
@@ -51,10 +58,22 @@
     const participantsList = document.getElementById("participants");
     const bansNumberText = document.getElementById("bansNumber");
     const teamsNumberText = document.getElementById("teamsNumber");
+    const blueSideBansContainer = document.getElementById("blue-team-bans");
+    const redSideBansContainer = document.getElementById("red-team-bans");
+    const blueSidePicksContainer = document.getElementById("blue-team-picks");
+    const redSidePicksContainer = document.getElementById("red-team-picks");
+    const currentPhaseText = document.getElementById("current-phase");
+    const redUsernameText = document.getElementById("red-username");
+    const blueUsernameText = document.getElementById("blue-username");
+
     var msgSent = false;
+    var selectedCharacter = null;
+    var bansNumber = null;
+    var teamsNumber = null;
+    var savedCharacters = [];
 
     // ----------------------
-    // GESTIONE CHAT
+    // GESTIONE GAME
     // ----------------------
 
     // Viene startato il game
@@ -70,6 +89,38 @@
         chatBox.scrollBy(0, chatBox.scrollHeight);
         msgSent = false;
       }
+    });
+
+    socket.on("update-game-state", (blueSideBans, redSideBans, blueSidePicks, redSidePicks, currentPhase) => {
+      if (Array.isArray(blueSideBans)) {
+        blueSideBans.forEach((char, i) => {
+          const slot = document.getElementById(`blue-ban-slot-${i}`);
+          slot.className = "blue-ban-slot";
+          slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character star-${getStarsByName(char)}"/>` : "";
+        });
+      }
+      if (Array.isArray(redSideBans)) {
+        redSideBans.forEach((char, i) => {
+          const slot = document.getElementById(`red-ban-slot-${i}`);
+          slot.className = "red-ban-slot";
+          slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character star-${getStarsByName(char)}"/>` : "";
+        });
+      }
+      if (Array.isArray(blueSidePicks)) {
+        blueSidePicks.forEach((char, i) => {
+          const slot = document.getElementById(`blue-pick-slot-${i}`);
+          slot.className = "blue-pick-slot";
+          slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character star-${getStarsByName(char)}"/>` : "";
+        });
+      }
+      if (Array.isArray(redSidePicks)) {
+        redSidePicks.forEach((char, i) => {
+          const slot = document.getElementById(`red-pick-slot-${i}`);
+          slot.className = "red-pick-slot";
+          slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character star-${getStarsByName(char)}"/>` : "";
+        });
+      }
+      currentPhaseText.innerHTML = currentPhase;
     });
 
     // Espandi la chat e abilitala quando ci si clicca sopra
@@ -107,18 +158,38 @@
       }
     });
 
+    function createTeamSlots(container, slotsCount, type) {
+      container.innerHTML = "";
+      for (let i = 0; i < slotsCount; i++) {
+        const slot = document.createElement("div");
+        slot.className = `${type}-slot slot-empty`;
+        slot.id = `${type}-slot-${i}`;
+        container.appendChild(slot);
+      }
+    }
+
+
+    // SCHIFO RISPOSTA SERVER
     socket.on("update-participants", (participants) => {
+      /*
       participantsList.innerHTML = "";
       participants.forEach((user) => {
         const listItem = document.createElement("li");
         listItem.textContent = user.username;
         participantsList.appendChild(listItem);
       });
+      */
     });
 
-    socket.on("update-bans-teams-number", (bansNumber, teamsNumber) => {
-      bansNumberText.innerHTML = `Debug-Ban-Number: ${bansNumber}`;
-      teamsNumberText.innerHTML = `Debug-Team-Number: ${teamsNumber}`;
+    socket.on("update-bans-teams-number", (_bansNumber, _teamsNumber, _blueUsername, _redUsername) => {
+      bansNumber = _bansNumber;
+      teamsNumber = _teamsNumber;
+      blueUsernameText.innerText = _blueUsername;
+      redUsernameText.innerHTML = _redUsername;
+      createTeamSlots(blueSideBansContainer, bansNumber, "blue-ban");
+      createTeamSlots(redSideBansContainer, bansNumber, "red-ban");
+      createTeamSlots(blueSidePicksContainer, teamsNumber * 4, "blue-pick");
+      createTeamSlots(redSidePicksContainer, teamsNumber * 4, "red-pick");
     });
 
     socket.on("user-disconnected", (username) => {
@@ -143,10 +214,16 @@
             .forEach((c) => {
               const img = document.createElement("img");
               img.src = c.ImageLink;
-              img.alt = c.Name;
+              img.id = c.Name;
               img.title = c.Name; // tooltip col nome
               img.className = `character star-${c.Stars}`;
               list.appendChild(img);
+              img.addEventListener("click", () => {
+                selectedCharacter = img.id;
+                console.log(img.id);
+              })
+
+              savedCharacters.push({ name: c.Name, imageLink: c.ImageLink, stars: c.Stars })
             });
         }
 
@@ -162,6 +239,24 @@
       }
     }
     loadCharacters();
+
+    function getImageLinkByName(name) {
+      const character = savedCharacters.find(c => c.name === name);
+      return character ? character.imageLink : null;
+    }
+
+    function getStarsByName(name) {
+      const character = savedCharacters.find(c => c.name === name);
+      return character ? character.stars : null;
+    }
+
+    function sumbitCharacter() {
+      if (selectedCharacter == null) {
+        alert("Devi prima selezionare un personaggio!");
+        return;
+      }
+      socket.emit("selected-character", selectedCharacter, username, roomId);
+    }
   </script>
 </body>
 
