@@ -2,73 +2,167 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Lobby</title>
-    <link rel="stylesheet" href="/game_styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Lobby</title>
+  <link rel="stylesheet" href="/game_styles.css" />
 </head>
 
 <body>
-    <div class="container">
-        <div class="bansNumber" id="bansNumber"></div>
-        <div class="teamsNumber" id="teamsNumber"></div>
-        <h2>Chat</h2>
-        <div id="chat-box"></div>
-        <input type="text" id="chat-input" placeholder="Scrivi un messaggio..." />
-        <button id="send-btn">Invia</button>
-
-        <h2>Partecipanti</h2>
-        <ul id="participants"></ul>
+  <div class="main-layout">
+    <!-- Container chat -->
+    <div id="chat-box-container">
+      <div id="chat-box"></div>
+      <input type="text" id="chat-input" placeholder="Send a message..." />
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const roomId = window.location.pathname.split("/")[2];
-        const username = new URLSearchParams(window.location.search).get("username");
+    <!-- Container sinistro -->
+    <div class="side-container left">
+      <!-- Contenuto opzionale -->
+    </div>
 
-        const chatBox = document.getElementById("chat-box");
-        const chatInput = document.getElementById("chat-input");
-        const sendBtn = document.getElementById("send-btn");
-        const participantsList = document.getElementById("participants");
-        const bansNumberText = document.getElementById("bansNumber");
-        const teamsNumberText = document.getElementById("teamsNumber");
+    <!-- Container principale -->
+    <div class="container">
+      <h2 style="text-align: center">Characters</h2>
+      <input type="text" id="search-bar" placeholder="Search for a character..." />
+      <div id="characters-box">
+        <div id="characters-list"></div>
+      </div>
+    </div>
 
-        socket.emit("join-game", roomId, username);
+    <!-- Container destro -->
+    <div class="side-container right">
+      <!-- Contenuto opzionale -->
+      <div class="bansNumber" id="bansNumber"></div>
+      <div class="teamsNumber" id="teamsNumber"></div>
+      <ul id="participants"></ul>
+    </div>
+  </div>
 
-        socket.on("chat-message", (message) => {
-            const messageElement = document.createElement("div");
-            messageElement.textContent = message;
-            chatBox.appendChild(messageElement);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const roomId = window.location.pathname.split("/")[2];
+    const username = new URLSearchParams(window.location.search).get("username");
+    const chatContainer = document.getElementById("chat-box-container");
+    const chatBox = document.getElementById("chat-box");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
+    const participantsList = document.getElementById("participants");
+    const bansNumberText = document.getElementById("bansNumber");
+    const teamsNumberText = document.getElementById("teamsNumber");
+    var msgSent = false;
 
-        sendBtn.addEventListener("click", () => {
-            const message = chatInput.value;
-            if (message) {
-                socket.emit("send-chat-message", roomId, message);
-                chatInput.value = "";
-            }
-        });
+    // ----------------------
+    // GESTIONE CHAT
+    // ----------------------
 
-        socket.on("update-participants", (participants) => {
-            participantsList.innerHTML = "";
-            participants.forEach((user) => {
-                const listItem = document.createElement("li");
-                listItem.textContent = user.username;
-                participantsList.appendChild(listItem);
+    // Viene startato il game
+    socket.emit("join-game", roomId, username);
+
+    // Ricevuto un messaggio della chat
+    socket.on("chat-message", (message) => {
+      const messageElement = document.createElement("div");
+      messageElement.textContent = message;
+      chatBox.appendChild(messageElement);
+
+      if (!chatContainer.classList.contains("active") || msgSent == true) {
+        chatBox.scrollBy(0, chatBox.scrollHeight);
+        msgSent = false;
+      }
+    });
+
+    // Espandi la chat e abilitala quando ci si clicca sopra
+    chatContainer.addEventListener("click", (e) => {
+      chatContainer.classList.add("active"); // espandi la chat
+
+      if (e.target === chatInput) {
+        // Se clicco sull'input: focus normale
+        chatInput.focus();
+      } else {
+        // Se clicco altrove nel container: non focusare l'input
+        chatInput.blur();
+      }
+    });
+
+    // Risuci la chat se si clicca da qualche altra parte
+    document.addEventListener("click", (e) => {
+      if (!chatContainer.contains(e.target)) {
+        chatContainer.classList.remove("active"); // riduci la chat
+        chatInput.blur();
+        chatBox.scrollBy(0, chatBox.scrollHeight);
+      }
+    });
+
+    // Invio del messaggio nella chat
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const message = chatInput.value.trim();
+        if (message) {
+          socket.emit("send-chat-message", roomId, message);
+          chatInput.value = "";
+        }
+        e.preventDefault(); // previene invio del form se c'è
+        msgSent = true;
+      }
+    });
+
+    socket.on("update-participants", (participants) => {
+      participantsList.innerHTML = "";
+      participants.forEach((user) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = user.username;
+        participantsList.appendChild(listItem);
+      });
+    });
+
+    socket.on("update-bans-teams-number", (bansNumber, teamsNumber) => {
+      bansNumberText.innerHTML = `Debug-Ban-Number: ${bansNumber}`;
+      teamsNumberText.innerHTML = `Debug-Team-Number: ${teamsNumber}`;
+    });
+
+    socket.on("user-disconnected", (username) => {
+      console.log(username + " disconnected");
+    });
+
+    // ----------------------
+    // GESTIONE PERSONAGGI DAL DB
+    // ----------------------
+    async function loadCharacters() {
+      try {
+        const res = await fetch("/characters");
+        const characters = await res.json();
+
+        const list = document.getElementById("characters-list");
+        const searchBar = document.getElementById("search-bar");
+
+        function renderList(filter = "") {
+          list.innerHTML = "";
+          characters
+            .filter(c => c.Name.toLowerCase().includes(filter.toLowerCase()))
+            .forEach((c) => {
+              const img = document.createElement("img");
+              img.src = c.ImageLink;
+              img.alt = c.Name;
+              img.title = c.Name; // tooltip col nome
+              img.className = `character star-${c.Stars}`;
+              list.appendChild(img);
             });
-        });
+        }
 
-        socket.on("update-bans-teams-number", (bansNumber, teamsNumber) => {
-            bansNumberText.innerHTML = `Numero di ban: ${bansNumber}`;
-            teamsNumberText.innerHTML = `Numero di squadre: ${teamsNumber}`;
-        });
+        // Prima renderizzazione
+        renderList();
 
-        socket.on("user-disconnected", (username) => {
-            console.log(username + " si è disconnesso");
+        // Filtro mentre scrivo nella searchbar
+        searchBar.addEventListener("input", (e) => {
+          renderList(e.target.value);
         });
-    </script>
+      } catch (err) {
+        console.error("Error while loading character:", err);
+      }
+    }
+    loadCharacters();
+  </script>
 </body>
 
 </html>

@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^12.2.0",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
+    "mysql2": "^3.14.3",
     "socket.io": "^4.8.1",
     "uuid": "^11.0.5"
   },

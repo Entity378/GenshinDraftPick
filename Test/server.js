@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+const Database = require("better-sqlite3");
 
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,25 @@ const io = new Server(server);
 const rooms = {};
 const games = {};
 const connectedGames = {};
+
+//instanzio il database
+const dbPath = path.join(__dirname, "public", "resources", "draftpick.db"); //filepath del database
+const db = new Database(dbPath, { readonly: true });
+console.log("Database connesso:", dbPath);
+
+app.get("/characters", (req, res) => {
+    try {
+        const characters = db
+            .prepare("SELECT * FROM character ORDER BY Stars DESC, Name ASC")
+            .all();
+        res.json(characters);
+    } catch (err) {
+        console.error("Errore query:", err);
+        res.status(500).send("Errore interno");
+    }
+});
+
+//fine della merda del database
 
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
