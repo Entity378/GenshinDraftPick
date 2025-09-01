@@ -2,14 +2,142 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lobby</title>
-    <link rel="stylesheet" href="/lobby_styles.css" />
+    <link rel="stylesheet" href="/main_styles.css">
+    <style>
+        .lobby-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: rgba(30, 30, 30, 0.95);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 120, 215, 0.6);
+        }
+
+        .room-id {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .host-options {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+
+        .host-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sides-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .side-option {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .side-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .side-option:first-child .side-label {
+            color: #4da6ff;
+        }
+
+        .side-option:last-child .side-label {
+            color: #ff4d4d;
+        }
+
+        .host-options select,
+        .host-options input {
+            display: block;
+            margin: 10px auto;
+            padding: 8px;
+            width: 80%;
+            font-size: 1em;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 6px;
+        }
+
+        .host-options b {
+            display: block;
+            margin: 10px auto;
+            width: 80%;
+            font-size: 1em;
+            color: #e0e0e0;
+        }
+
+        .copy-btn {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .start-btn {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        .start-btn:hover {
+            background-color: #218838;
+        }
+
+        #participants {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+
+        #participants li {
+            padding: 10px;
+            border-bottom: 1px solid #444;
+            text-align: center;
+            color: #e0e0e0;
+        }
+
+        .copy-message {
+            color: #28a745;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
-<body>
-    <div class="container">
+<body class="lobby-page">
+    <div class="container lobby-container">
         <div class="title" id="title">GI Draft Pick (TITLE PLACEHOLDER)</div>
 
         <h2>Partecipanti</h2>
@@ -28,43 +156,44 @@
                 </div>
             </div>
             <b class="bans-number-text" id="bans-number-text">Numero di ban (per player)</b>
-            <input type="number" class="bans-number" id="bans-number" min="0" max="4" value="2" autocomplete="off" />
+            <input type="number" class="bans-number" id="bans-number" min="0" max="4" value="2" autocomplete="off">
             <b class="teams-number-text" id="teams-number-text">Numero di squadre (per player)</b>
-            <input type="number" class="teams-number" id="teams-number" min="1" max="3" value="2" autocomplete="off" />
-            <button id="start-btn" class="start-btn">Inizia Gioco</button>
+            <input type="number" class="teams-number" id="teams-number" min="1" max="3" value="2" autocomplete="off">
+            <button id="start-btn" class="btn start-btn">Inizia Gioco</button>
         </div>
 
         <div class="room-id" id="room-id"></div>
-        <button class="copy-btn" id="copy-btn">Copia ID Stanza</button>
+        <button class="btn copy-btn" id="copy-btn">Copia ID Stanza</button>
         <div class="copy-message" id="copy-message" style="display: none">ID copiato negli appunti!</div>
-
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const roomId = window.location.pathname.split("/")[2];
-        const username = new URLSearchParams(window.location.search).get(
-            "username"
-        );
+        const username = new URLSearchParams(window.location.search).get("username");
 
-        const roomIdDiv = document.getElementById("room-id");
-        const copyBtn = document.getElementById("copy-btn");
-        const copyMessage = document.getElementById("copy-message");
-        const participantsList = document.getElementById("participants");
-        const blueSideSelect = document.getElementById("blueSide");
-        const redSideSelect = document.getElementById("redSide");
-        const hostOptions = document.getElementById("host-options");
-        const startButton = document.getElementById("start-btn");
-        roomIdDiv.textContent = roomId;
+        const DOM = {
+            get roomIdDiv() { return document.getElementById("room-id"); },
+            get copyBtn() { return document.getElementById("copy-btn"); },
+            get copyMessage() { return document.getElementById("copy-message"); },
+            get participantsList() { return document.getElementById("participants"); },
+            get blueSideSelect() { return document.getElementById("blueSide"); },
+            get redSideSelect() { return document.getElementById("redSide"); },
+            get hostOptions() { return document.getElementById("host-options"); },
+            get startButton() { return document.getElementById("start-btn"); },
+            get bansNumber() { return document.getElementById("bans-number"); },
+            get teamsNumber() { return document.getElementById("teams-number"); }
+        };
 
-        copyBtn.addEventListener("click", () => {
-            navigator.clipboard
-                .writeText(roomId)
+        DOM.roomIdDiv.textContent = roomId;
+
+        DOM.copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(roomId)
                 .then(() => {
-                    copyMessage.style.display = "block";
+                    DOM.copyMessage.style.display = "block";
                     setTimeout(() => {
-                        copyMessage.style.display = "none";
+                        DOM.copyMessage.style.display = "none";
                     }, 2000);
                 })
                 .catch((err) => {
@@ -75,20 +204,19 @@
         socket.emit("join-room", roomId, username);
 
         socket.on("update-participants", (participants) => {
-            blueUsername = blueSideSelect.value;
-            redUsername = redSideSelect.value;
+            let blueUsername = DOM.blueSideSelect.value;
+            let redUsername = DOM.redSideSelect.value;
+            let isBlueSideUsernamePresent = false;
+            let isRedSideUsernamePresent = false;
 
-            var isBlueSideUsernamePresent = false;
-            var isRedSideUsernamePresent = false;
-
-            participantsList.innerHTML = "";
-            blueSideSelect.innerHTML = "";
-            redSideSelect.innerHTML = "";
+            DOM.participantsList.innerHTML = "";
+            DOM.blueSideSelect.innerHTML = "";
+            DOM.redSideSelect.innerHTML = "";
 
             participants.forEach((user, index) => {
                 const listItem = document.createElement("li");
                 listItem.textContent = user.username;
-                participantsList.appendChild(listItem);
+                DOM.participantsList.appendChild(listItem);
 
                 const optionItemBlue = document.createElement("option");
                 optionItemBlue.value = user.username;
@@ -98,39 +226,37 @@
                 optionItemRed.value = user.username;
                 optionItemRed.textContent = user.username;
 
-                blueSideSelect.appendChild(optionItemBlue);
-                redSideSelect.appendChild(optionItemRed);
+                DOM.blueSideSelect.appendChild(optionItemBlue);
+                DOM.redSideSelect.appendChild(optionItemRed);
 
                 if (index === 0 && user.username === username) {
-                    hostOptions.style.display = "block";
+                    DOM.hostOptions.style.display = "block";
                 }
-                if (user.username === blueUsername && !isBlueSideUsernamePresent) {
+                if (user.username === blueUsername) {
                     isBlueSideUsernamePresent = true;
                 }
-                if (user.username === redUsername && !isRedSideUsernamePresent) {
+                if (user.username === redUsername) {
                     isRedSideUsernamePresent = true;
                 }
             });
 
             if (isBlueSideUsernamePresent) {
-                blueSideSelect.value = blueUsername;
+                DOM.blueSideSelect.value = blueUsername;
             }
             if (isRedSideUsernamePresent) {
-                redSideSelect.value = redUsername;
+                DOM.redSideSelect.value = redUsername;
             }
         });
 
-        startButton.addEventListener("click", () => {
-            var bansNumber = document.getElementById("bans-number").value;
-            var teamsNumber = document.getElementById("teams-number").value;
+        DOM.startButton.addEventListener("click", () => {
             socket.emit(
                 "start-game",
                 roomId,
                 username,
-                bansNumber,
-                teamsNumber,
-                blueSideSelect.value,
-                redSideSelect.value
+                DOM.bansNumber.value,
+                DOM.teamsNumber.value,
+                DOM.blueSideSelect.value,
+                DOM.redSideSelect.value
             );
         });
 
