@@ -241,7 +241,8 @@ io.on("connection", (socket) => {
                 game.redSideBans.push(selectedCharacter);
             }
         } else if (currentPhase.type === "pick") {
-            if (game.blueSidePicks.includes(selectedCharacter) || game.redSidePicks.includes(selectedCharacter)) {
+            if (game.blueSidePicks.includes(selectedCharacter) || game.redSidePicks.includes(selectedCharacter) ||
+                game.blueSideBans.includes(selectedCharacter) || game.redSideBans.includes(selectedCharacter)) {
                 socket.emit("error", "CICCIONE DI MERDA!");
                 return;
             } if (username == game.blueSideUsername) {
@@ -252,16 +253,16 @@ io.on("connection", (socket) => {
             }
         }
 
-        game.phaseIndex++;
-        console.log(Array.isArray(game.blueSideBans)); // deve stampare true
-        console.log(game.blueSideBans);
         io.to(roomId).emit("update-game-state",
             game.blueSideBans,
             game.redSideBans,
             game.blueSidePicks,
             game.redSidePicks,
-            game.gamePhase[game.phaseIndex].type
+            game.gamePhase[game.phaseIndex + 1].type,
+            game.gamePhase[game.phaseIndex + 1].username
         );
+
+        game.phaseIndex++;
     });
 
     function generatePhases(bansNumber, teamsNumber, blueSideUsername, redSideUsername) {
@@ -281,6 +282,7 @@ io.on("connection", (socket) => {
             phases.push({ username: playerName, type: "pick" });
         }
 
+        phases.push({ username: null, type: "end" });
         return phases;
     }
 });

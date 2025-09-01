@@ -3,10 +3,8 @@ body {
     padding: 0;
     font-family: 'Segoe UI', Roboto, sans-serif;
     background: url("https://github.com/Entity378/GenshinDraftPick/blob/main/Resources/Images/Backgrounds/Menu_BackGround.png?raw=true") no-repeat center center fixed;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    background-size: cover;
     color: #e0e0e0;
-    height: 100vh;
 }
 
 .main-layout {
@@ -23,7 +21,7 @@ body {
 
 /* Container laterali */
 .side-container {
-    width: 15%;
+    width: 20%;
     /* più piccoli dei container principali */
     background-color: rgba(30, 30, 30, 0.9);
     border-radius: 12px;
@@ -87,6 +85,10 @@ body {
     transform: scale(1.1);
 }
 
+.ban {
+    filter: grayscale(1);
+}
+
 .star-5 {
     border-color: gold;
     box-shadow: 0 0 10px gold;
@@ -97,12 +99,127 @@ body {
     box-shadow: 0 0 10px purple;
 }
 
+.disabled {
+    border-radius: 10px;
+    border: 2px solid #aaa;
+    transition: transform 0.2s ease;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-color: red;
+    filter: grayscale(1);
+}
+
+/* Stile per i ban (affiancati) */
+.blue-team-bans,
+.red-team-bans {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px;
+    flex-wrap: wrap;
+}
+
+.blue-ban-slot,
+.red-ban-slot {
+    height: 128px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background-color: rgba(40, 40, 40, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blue-ban-slot {
+    border-color: #3498db;
+    box-shadow: 0 0 10px #3498db;
+}
+
+.red-ban-slot {
+    border-color: #e74c3c;
+    box-shadow: 0 0 10px #e74c3c;
+}
+
+/* Stile per i pick (in orizzontale) */
+.blue-team-picks,
+.red-team-picks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pick-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.blue-pick-slot,
+.red-pick-slot {
+    height: 100px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background-color: rgba(40, 40, 40, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blue-pick-slot {
+    border-color: #3498db;
+    box-shadow: 0 0 10px #3498db;
+}
+
+.red-pick-slot {
+    border-color: #e74c3c;
+    box-shadow: 0 0 10px #e74c3c;
+}
+
+/* Mini character per ban e pick */
+.mini-character {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* Pulsante di submit */
+.submit-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    align-self: center;
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+}
+
+/* Indicatore fase corrente */
+.current-phase {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #f1c40f;
+}
+
 #chat-box-container {
     position: fixed;
     /* sempre sopra gli altri */
     bottom: 10px;
     left: 10px;
-    width: 280px;
+    width: 19.75%;
     max-height: 300px;
     background-color: rgba(30, 30, 30, 0.6);
     /* trasparente di default */
@@ -114,6 +231,11 @@ body {
     z-index: 9999;
     transition: opacity 0.3s;
     overflow: hidden;
+    word-wrap: break-word;
+    /* vecchio, ma compatibile */
+    overflow-wrap: break-word;
+    /* standard moderno */
+    white-space: normal;
 }
 
 /* Stato ridotto e trasparente */
@@ -181,4 +303,28 @@ body {
 
 #send-btn:hover {
     background: #005fa3;
+}
+
+.bans-text,
+.pick-text {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.6);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    text-align: center;
+}
+
+.bans-text {
+    background-color: rgba(200, 20, 20, 0.8);
+    /* rosso scuro semi-trasparente */
+}
+
+.pick-text {
+    background-color: rgba(20, 100, 200, 0.8);
+    /* blu scuro semi-trasparente */
 }
