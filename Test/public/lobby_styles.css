@@ -4,8 +4,7 @@ body {
     padding: 0;
     font-family: 'Segoe UI', Roboto, sans-serif;
     background: url("https://github.com/Entity378/GenshinDraftPick/blob/main/Resources/Images/Backgrounds/Menu_BackGround.webp?raw=true") no-repeat center center fixed;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    background-size: cover;
     color: #e0e0e0;
 }
 
@@ -42,6 +41,7 @@ body {
     font-size: 1em;
     transition: background 0.2s ease;
 }
+
 .copy-btn:hover {
     background: #005fa3;
 }
@@ -72,14 +72,14 @@ body {
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8),
-                 0 0 8px rgba(0, 120, 215, 0.6);
+        0 0 8px rgba(0, 120, 215, 0.6);
 }
 
 .host-title {
     text-align: center;
     font-size: 1.4em;
     font-weight: bold;
-    color: #fff; 
+    color: #fff;
     margin-bottom: 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -132,10 +132,13 @@ body {
 
 /* LABEL COLORATE PER BLUE E RED SIDE */
 .side-option:first-child .side-label {
-    color: #4da6ff; /* blu acceso */
+    color: #4da6ff;
+    /* blu acceso */
 }
+
 .side-option:last-child .side-label {
-    color: #ff4d4d; /* rosso acceso */
+    color: #ff4d4d;
+    /* rosso acceso */
 }
 
 /* SELECT ALL'INTERNO DELLE OPZIONI */
@@ -161,6 +164,7 @@ body {
     font-size: 1em;
     transition: background 0.2s ease;
 }
+
 .start-btn:hover {
     background: #218838;
 }

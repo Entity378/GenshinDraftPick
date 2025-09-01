@@ -218,6 +218,30 @@ io.on("connection", (socket) => {
         }
     });
 
+    socket.on("hovered-character", (selectedCharacter, username, roomId) => {
+        const game = games[roomId];
+        if (!game) return;
+
+        const currentPhase = game.gamePhase[game.phaseIndex];
+
+        if (username !== currentPhase.username) {
+            socket.emit("error", "Non è il tuo turno!");
+            return;
+        }
+
+        if (game.blueSidePicks.includes(selectedCharacter) || game.redSidePicks.includes(selectedCharacter) ||
+            game.blueSideBans.includes(selectedCharacter) || game.redSideBans.includes(selectedCharacter)) {
+            socket.emit("error", "CICCIONE DI MERDA!");
+            return;
+        }
+
+        io.to(roomId).emit("update-player-hover",
+            selectedCharacter,
+            game.gamePhase[game.phaseIndex].username,
+            game.gamePhase[game.phaseIndex].type
+        );
+    });
+
     socket.on("selected-character", (selectedCharacter, username, roomId) => {
         const game = games[roomId];
         if (!game) return;
@@ -253,16 +277,15 @@ io.on("connection", (socket) => {
             }
         }
 
+        game.phaseIndex++;
         io.to(roomId).emit("update-game-state",
             game.blueSideBans,
             game.redSideBans,
             game.blueSidePicks,
             game.redSidePicks,
-            game.gamePhase[game.phaseIndex + 1].type,
-            game.gamePhase[game.phaseIndex + 1].username
+            game.gamePhase[game.phaseIndex].type,
+            game.gamePhase[game.phaseIndex].username
         );
-
-        game.phaseIndex++;
     });
 
     function generatePhases(bansNumber, teamsNumber, blueSideUsername, redSideUsername) {

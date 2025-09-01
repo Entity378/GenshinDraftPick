@@ -1,159 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lobby</title>
-    <link rel="stylesheet" href="/lobby_styles.css" />
-  </head>
 
-  <body>
-    <div class="container">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lobby</title>
+  <link rel="stylesheet" href="/lobby_styles.css" />
+</head>
+
+<body autocomplete="off">
+  <div class="container">
     <div class="title" id="title">GI Draft Pick (TITLE PLACEHOLDER)</div>
 
-      <h2>Partecipanti</h2>
-      <ul id="participants"></ul>
+    <h2>Partecipanti</h2>
+    <ul id="participants"></ul>
 
-      <div class="host-options" id="host-options" style="display: none">
-        <h3 class="host-title">Game Setting</h3>
-        <div class="sides-container">
-            <div class="side-option">
-                <label for="blueSide" class="side-label">Blue Side</label>
-                <select class="blueSide" id="blueSide"></select>
-            </div>
-            <div class="side-option">
-                <label for="redSide" class="side-label">Red Side</label>
-                <select class="redSide" id="redSide"></select>
-            </div>
+    <div class="host-options" id="host-options" style="display: none">
+      <h3 class="host-title">Game Setting</h3>
+      <div class="sides-container">
+        <div class="side-option">
+          <label for="blueSide" class="side-label">Blue Side</label>
+          <select class="blueSide" id="blueSide"></select>
         </div>
-        <b class="bans-number-text" id="bans-number-text">Numero di ban (per player)</b>
-        <input
-          type="number"
-          class="bans-number"
-          id="bans-number"
-          min="0"
-          max="4"
-          value="2"
-        />
-        <b class="teams-number-text" id="teams-number-text">Numero di squadre (per player)</b>
-        <input
-          type="number"
-          class="teams-number"
-          id="teams-number"
-          min="1"
-          max="3"
-          value="2"
-        />
-        <button id="start-btn" class="start-btn">Inizia Gioco</button>
+        <div class="side-option">
+          <label for="redSide" class="side-label">Red Side</label>
+          <select class="redSide" id="redSide"></select>
+        </div>
       </div>
-
-      <div class="room-id" id="room-id"></div>
-      <button class="copy-btn" id="copy-btn">Copia ID Stanza</button>
-      <div class="copy-message" id="copy-message" style="display: none">ID copiato negli appunti!</div>
-
+      <b class="bans-number-text" id="bans-number-text">Numero di ban (per player)</b>
+      <input type="number" class="bans-number" id="bans-number" min="0" max="4" value="2" autocomplete="off" />
+      <b class="teams-number-text" id="teams-number-text">Numero di squadre (per player)</b>
+      <input type="number" class="teams-number" id="teams-number" min="1" max="3" value="2" autocomplete="off" />
+      <button id="start-btn" class="start-btn">Inizia Gioco</button>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      const socket = io();
-      const roomId = window.location.pathname.split("/")[2];
-      const username = new URLSearchParams(window.location.search).get(
-        "username"
-      );
+    <div class="room-id" id="room-id"></div>
+    <button class="copy-btn" id="copy-btn">Copia ID Stanza</button>
+    <div class="copy-message" id="copy-message" style="display: none">ID copiato negli appunti!</div>
 
-      const roomIdDiv = document.getElementById("room-id");
-      const copyBtn = document.getElementById("copy-btn");
-      const copyMessage = document.getElementById("copy-message");
-      const participantsList = document.getElementById("participants");
-      const blueSideSelect = document.getElementById("blueSide");
-      const redSideSelect = document.getElementById("redSide");
-      const hostOptions = document.getElementById("host-options");
-      const startButton = document.getElementById("start-btn");
-      roomIdDiv.textContent = roomId;
+  </div>
 
-      copyBtn.addEventListener("click", () => {
-        navigator.clipboard
-          .writeText(roomId)
-          .then(() => {
-            copyMessage.style.display = "block";
-            setTimeout(() => {
-              copyMessage.style.display = "none";
-            }, 2000);
-          })
-          .catch((err) => {
-            console.error("Errore nella copia dell'ID:", err);
-          });
-      });
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const roomId = window.location.pathname.split("/")[2];
+    const username = new URLSearchParams(window.location.search).get(
+      "username"
+    );
 
-      socket.emit("join-room", roomId, username);
+    const roomIdDiv = document.getElementById("room-id");
+    const copyBtn = document.getElementById("copy-btn");
+    const copyMessage = document.getElementById("copy-message");
+    const participantsList = document.getElementById("participants");
+    const blueSideSelect = document.getElementById("blueSide");
+    const redSideSelect = document.getElementById("redSide");
+    const hostOptions = document.getElementById("host-options");
+    const startButton = document.getElementById("start-btn");
+    roomIdDiv.textContent = roomId;
 
-      socket.on("update-participants", (participants) => {
-        blueUsername = blueSideSelect.value;
-        redUsername = redSideSelect.value;
-
-        var isBlueSideUsernamePresent = false;
-        var isRedSideUsernamePresent = false;
-
-        participantsList.innerHTML = "";
-        blueSideSelect.innerHTML = "";
-        redSideSelect.innerHTML = "";
-
-        participants.forEach((user, index) => {
-          const listItem = document.createElement("li");
-          listItem.textContent = user.username;
-          participantsList.appendChild(listItem);
-
-          const optionItemBlue = document.createElement("option");
-          optionItemBlue.value = user.username;
-          optionItemBlue.textContent = user.username;
-
-          const optionItemRed = document.createElement("option");
-          optionItemRed.value = user.username;
-          optionItemRed.textContent = user.username;
-
-          blueSideSelect.appendChild(optionItemBlue);
-          redSideSelect.appendChild(optionItemRed);
-
-          if (index === 0 && user.username === username) {
-            hostOptions.style.display = "block";
-          }
-          if (user.username === blueUsername && !isBlueSideUsernamePresent) {
-            isBlueSideUsernamePresent = true;
-          }
-          if (user.username === redUsername && !isRedSideUsernamePresent) {
-            isRedSideUsernamePresent = true;
-          }
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard
+        .writeText(roomId)
+        .then(() => {
+          copyMessage.style.display = "block";
+          setTimeout(() => {
+            copyMessage.style.display = "none";
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("Errore nella copia dell'ID:", err);
         });
+    });
 
-        if (isBlueSideUsernamePresent) {
-          blueSideSelect.value = blueUsername;
+    socket.emit("join-room", roomId, username);
+
+    socket.on("update-participants", (participants) => {
+      blueUsername = blueSideSelect.value;
+      redUsername = redSideSelect.value;
+
+      var isBlueSideUsernamePresent = false;
+      var isRedSideUsernamePresent = false;
+
+      participantsList.innerHTML = "";
+      blueSideSelect.innerHTML = "";
+      redSideSelect.innerHTML = "";
+
+      participants.forEach((user, index) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = user.username;
+        participantsList.appendChild(listItem);
+
+        const optionItemBlue = document.createElement("option");
+        optionItemBlue.value = user.username;
+        optionItemBlue.textContent = user.username;
+
+        const optionItemRed = document.createElement("option");
+        optionItemRed.value = user.username;
+        optionItemRed.textContent = user.username;
+
+        blueSideSelect.appendChild(optionItemBlue);
+        redSideSelect.appendChild(optionItemRed);
+
+        if (index === 0 && user.username === username) {
+          hostOptions.style.display = "block";
         }
-        if (isRedSideUsernamePresent) {
-          redSideSelect.value = redUsername;
+        if (user.username === blueUsername && !isBlueSideUsernamePresent) {
+          isBlueSideUsernamePresent = true;
+        }
+        if (user.username === redUsername && !isRedSideUsernamePresent) {
+          isRedSideUsernamePresent = true;
         }
       });
 
-      startButton.addEventListener("click", () => {
-        var bansNumber = document.getElementById("bans-number").value;
-        var teamsNumber = document.getElementById("teams-number").value;
-        socket.emit(
-          "start-game",
-          roomId,
-          username,
-          bansNumber,
-          teamsNumber,
-          blueSideSelect.value,
-          redSideSelect.value
-        );
-      });
+      if (isBlueSideUsernamePresent) {
+        blueSideSelect.value = blueUsername;
+      }
+      if (isRedSideUsernamePresent) {
+        redSideSelect.value = redUsername;
+      }
+    });
 
-      socket.on("redirect-to-game", () => {
-        window.location.href = `/game/${roomId}?username=${username}`;
-      });
+    startButton.addEventListener("click", () => {
+      var bansNumber = document.getElementById("bans-number").value;
+      var teamsNumber = document.getElementById("teams-number").value;
+      socket.emit(
+        "start-game",
+        roomId,
+        username,
+        bansNumber,
+        teamsNumber,
+        blueSideSelect.value,
+        redSideSelect.value
+      );
+    });
 
-      socket.on("user-disconnected", (username) => {
-        console.log(username + " si è disconnesso");
-      });
-    </script>
-  </body>
+    socket.on("redirect-to-game", () => {
+      window.location.href = `/game/${roomId}?username=${username}`;
+    });
+
+    socket.on("user-disconnected", (username) => {
+      console.log(username + " si è disconnesso");
+    });
+  </script>
+</body>
+
 </html>

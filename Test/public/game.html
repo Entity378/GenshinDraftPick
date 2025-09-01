@@ -8,26 +8,28 @@
   <link rel="stylesheet" href="/game_styles.css" />
 </head>
 
-<body>
+<body autocomplete="off">
   <div class="main-layout">
     <!-- Container chat -->
     <div id="chat-box-container">
       <div id="chat-box"></div>
-      <input type="text" id="chat-input" placeholder="Send a message..." />
+      <input type="text" id="chat-input" placeholder="Send a message..." autocomplete="off" />
     </div>
 
     <!-- Container sinistro -->
     <div class="side-container left">
       <h2 id="blue-username" style="text-align: center">Blue</h2>
       <div class="bans-text">Bans</div>
-      <div id="blue-team-bans" class="blue-team-bans"></div>
+      <div id="blue-team-bans" class="blue-team-bans">
+        <div id="blue-ban-row" class="ban-row"></div>
+      </div>
       <div id="blue-team-picks" class="blue-team-picks"></div>
     </div>
 
     <!-- Container principale -->
     <div class="container">
       <h2 style="text-align: center">Characters</h2>
-      <input type="text" id="search-bar" placeholder="Search for a character..." />
+      <input type="text" id="search-bar" placeholder="Search for a character..." autocomplete="off" />
       <div id="characters-box">
         <div id="characters-list"></div>
       </div>
@@ -39,7 +41,9 @@
     <div class="side-container right">
       <h2 id="red-username" style="text-align: center">Red</h2>
       <div class="bans-text">Bans</div>
-      <div id="red-team-bans" class="red-team-bans"></div>
+      <div id="red-team-bans" class="red-team-bans">
+        <div id="red-ban-row" class="ban-row"></div>
+      </div>
       <div id="red-team-picks" class="red-team-picks"></div>
       <!-- Contenuto opzionale -->
       <!-- <div class="bansNumber" id="bansNumber"></div> -->
@@ -53,6 +57,7 @@
     const socket = io();
     const roomId = window.location.pathname.split("/")[2];
     const username = new URLSearchParams(window.location.search).get("username");
+
     const chatContainer = document.getElementById("chat-box-container");
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
@@ -60,8 +65,8 @@
     const participantsList = document.getElementById("participants");
     const bansNumberText = document.getElementById("bansNumber");
     const teamsNumberText = document.getElementById("teamsNumber");
-    const blueSideBansContainer = document.getElementById("blue-team-bans");
-    const redSideBansContainer = document.getElementById("red-team-bans");
+    const blueSideBansContainer = document.getElementById("blue-ban-row");
+    const redSideBansContainer = document.getElementById("red-ban-row");
     const blueSidePicksContainer = document.getElementById("blue-team-picks");
     const redSidePicksContainer = document.getElementById("red-team-picks");
     const currentPhaseText = document.getElementById("current-phase");
@@ -95,18 +100,38 @@
       }
     });
 
+    socket.on("update-player-hover", (selectedCharacter, playerUsername, phaseType) => {
+      const imgLink = getImageLinkByName(selectedCharacter);
+      if (!imgLink) return;
+
+      // Determina i container giusti in base al team
+      let slotSelector = "";
+      if (playerUsername == redUsernameText.innerText) {
+        slotSelector = phaseType === "ban" ? ".red-ban-row-slot.slot-empty" : ".red-pick-slot.slot-empty";
+      } else if (playerUsername == blueUsernameText.innerText) {
+        slotSelector = phaseType === "ban" ? ".blue-ban-row-slot.slot-empty" : ".blue-pick-slot.slot-empty";
+      }
+
+      if (!slotSelector) return;
+
+      const emptySlot = document.querySelector(slotSelector);
+      if (emptySlot) {
+        emptySlot.innerHTML = `<img src="${imgLink}" title="${selectedCharacter}" class="mini-character hover"/>`;
+      }
+    });
+
     socket.on("update-game-state", (blueSideBans, redSideBans, blueSidePicks, redSidePicks, currentPhase, currentUsername) => {
       if (Array.isArray(blueSideBans)) {
         blueSideBans.forEach((char, i) => {
-          const slot = document.getElementById(`blue-ban-slot-${i}`);
-          slot.className = "blue-ban-slot";
+          const slot = document.getElementById(`blue-ban-row-slot-${i}`);
+          slot.className = "blue-ban-row-slot";
           slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character ban"/>` : "";
         });
       }
       if (Array.isArray(redSideBans)) {
         redSideBans.forEach((char, i) => {
-          const slot = document.getElementById(`red-ban-slot-${i}`);
-          slot.className = "red-ban-slot";
+          const slot = document.getElementById(`red-ban-row-slot-${i}`);
+          slot.className = "red-ban-row-slot";
           slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character ban"/>` : "";
         });
       }
@@ -200,7 +225,11 @@
         for (let r = 0; r < rows; r++) {
           const teamText = document.createElement("div");
           teamText.textContent = "Team " + (r + 1);
-          teamText.className = "pick-text";
+          if (container == redSidePicksContainer) {
+            teamText.className = "red-pick-text";
+          } else {
+            teamText.className = "blue-pick-text";
+          }
           const rowDiv = document.createElement("div");
           rowDiv.className = "pick-row";
 
@@ -211,6 +240,7 @@
             const slot = document.createElement("div");
             slot.className = `${type}-slot slot-empty`;
             slot.id = `${type}-slot-${slotIndex}`;
+            slot.innerHTML = `<img src="https://github.com/Entity378/GenshinDraftPick/blob/main/Resources/Images/Generic_Icons/Empty.png?raw=true" class="mini-character"/>`;
             rowDiv.appendChild(slot);
           }
           container.appendChild(teamText);
@@ -229,6 +259,7 @@
           const slot = document.createElement("div");
           slot.className = `${type}-slot slot-empty`;
           slot.id = `${type}-slot-${i}`;
+          slot.innerHTML = `<img src="https://github.com/Entity378/GenshinDraftPick/blob/main/Resources/Images/Generic_Icons/Empty.png?raw=true" class="mini-character"/>`;
           container.appendChild(slot);
         }
       }
@@ -252,8 +283,8 @@
       teamsNumber = _teamsNumber;
       blueUsernameText.innerText = _blueUsername;
       redUsernameText.innerHTML = _redUsername;
-      createTeamSlots(blueSideBansContainer, bansNumber, "blue-ban");
-      createTeamSlots(redSideBansContainer, bansNumber, "red-ban");
+      createTeamSlots(blueSideBansContainer, bansNumber, "blue-ban-row");
+      createTeamSlots(redSideBansContainer, bansNumber, "red-ban-row");
       createTeamSlots(blueSidePicksContainer, teamsNumber * 4, "blue-pick");
       createTeamSlots(redSidePicksContainer, teamsNumber * 4, "red-pick");
     });
@@ -289,6 +320,7 @@
               list.appendChild(img);
               img.addEventListener("click", () => {
                 selectedCharacter = img.id;
+                socket.emit("hovered-character", selectedCharacter, username, roomId);
                 console.log(img.id);
               })
 

@@ -118,27 +118,32 @@ body {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin: 20px;
     flex-wrap: wrap;
 }
 
-.blue-ban-slot,
-.red-ban-slot {
-    height: 128px;
+/*.slot-empty {
+    background: url("https://github.com/Entity378/GenshinDraftPick/blob/main/Resources/Images/Generic_Icons/Empty.png?raw=true") no-repeat center center fixed;
+}*/
+
+.blue-ban-row-slot,
+.red-ban-row-slot {
+    height: 100px;
     border: 2px solid #555;
     border-radius: 8px;
     background-color: rgba(40, 40, 40, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-.blue-ban-slot {
+.blue-ban-row-slot {
     border-color: #3498db;
     box-shadow: 0 0 10px #3498db;
 }
 
-.red-ban-slot {
+.red-ban-row-slot {
     border-color: #e74c3c;
     box-shadow: 0 0 10px #e74c3c;
 }
@@ -151,6 +156,7 @@ body {
     gap: 10px;
 }
 
+.ban-row,
 .pick-row {
     display: flex;
     justify-content: center;
@@ -306,7 +312,8 @@ body {
 }
 
 .bans-text,
-.pick-text {
+.blue-pick-text,
+.red-pick-text {
     display: inline-block;
     padding: 4px 8px;
     border-radius: 4px;
@@ -320,11 +327,16 @@ body {
 }
 
 .bans-text {
-    background-color: rgba(200, 20, 20, 0.8);
+    background-color: rgba(120, 120, 120, 0.8);
     /* rosso scuro semi-trasparente */
 }
 
-.pick-text {
+.blue-pick-text {
     background-color: rgba(20, 100, 200, 0.8);
     /* blu scuro semi-trasparente */
+}
+
+.red-pick-text {
+    background-color: rgba(200, 20, 20, 0.8);
+    /* rosso scuro semi-trasparente */
 }
