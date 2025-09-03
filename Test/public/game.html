@@ -7,6 +7,7 @@
     <title>Game Lobby</title>
     <link rel="stylesheet" href="/main_styles.css">
     <style>
+        /* I tuoi stili esistenti rimangono invariati */
         .main-layout {
             display: flex;
             justify-content: center;
@@ -291,10 +292,37 @@
         .red-pick-text {
             background-color: rgba(200, 20, 20, 0.8);
         }
+
+        /* Audio controls nascosti */
+        .audio-elements {
+            display: none;
+        }
+
+        /* Pulsante per attivare/disattivare i suoni */
+        .sound-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(30, 30, 30, 0.7);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+        }
     </style>
 </head>
 
 <body class="game-page">
+    <!-- Pulsante per attivare/disattivare i suoni -->
+    <button id="sound-toggle" class="sound-toggle">🔊</button>
+
     <div class="main-layout">
         <div id="chat-box-container">
             <div id="chat-box"></div>
@@ -336,6 +364,18 @@
         const roomId = window.location.pathname.split("/")[2];
         const username = new URLSearchParams(window.location.search).get("username");
 
+        // Mappa dei suoni disponibili
+        const soundFiles = {
+            click: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/click.mp3',
+            hover: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/hover.mp3',
+            ban: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/ban.mp3',
+            pick: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/pick.mp3',
+            notification: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/notification.mp3',
+            phaseChange: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/phase-change.mp3',
+            error: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/error.mp3',
+            userTurn: 'https://raw.githubusercontent.com/Entity378/GenshinDraftPick/refs/heads/main/Resources/Sounds/user-turn.mp3'
+        };
+
         const DOM = {
             get chatContainer() { return document.getElementById("chat-box-container"); },
             get chatBox() { return document.getElementById("chat-box"); },
@@ -349,7 +389,8 @@
             get blueUsernameText() { return document.getElementById("blue-username"); },
             get charactersList() { return document.getElementById("characters-list"); },
             get searchBar() { return document.getElementById("search-bar"); },
-            get submitBtn() { return document.getElementById("submit-btn"); }
+            get submitBtn() { return document.getElementById("submit-btn"); },
+            get soundToggle() { return document.getElementById("sound-toggle"); }
         };
 
         let allPicksAndBans = [];
@@ -358,6 +399,55 @@
         let bansNumber = null;
         let teamsNumber = null;
         let savedCharacters = [];
+        let soundEnabled = true; // Flag per abilitare/disabilitare i suoni
+
+        // Funzione per riprodurre suoni (crea una nuova istanza ogni volta)
+        function playSound(soundType, volume = 0.5) {
+            if (!soundEnabled || !soundFiles[soundType]) return;
+
+            try {
+                // Crea un nuovo elemento audio ogni volta
+                const audio = new Audio(soundFiles[soundType]);
+                audio.volume = volume;
+
+                // Rimuovi l'elemento quando la riproduzione è completata
+                audio.addEventListener('ended', function () {
+                    this.remove();
+                });
+
+                audio.play().catch(e => {
+                    console.log("Impossibile riprodurre il suono:", e);
+                    audio.remove();
+                });
+            } catch (error) {
+                console.log("Errore nella riproduzione del suono:", error);
+            }
+        }
+
+        // Aggiorna il pulsante del suono
+        function updateSoundToggle() {
+            DOM.soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
+        }
+
+        // Inizializza il toggle del suono
+        DOM.soundToggle.addEventListener('click', function () {
+            soundEnabled = !soundEnabled;
+            updateSoundToggle();
+
+            // Mostra messaggio nella chat
+            const messageElement = document.createElement("div");
+            messageElement.textContent = `Suoni ${soundEnabled ? 'abilitati 🔊' : 'disabilitati 🔇'}`;
+            messageElement.style.color = soundEnabled ? '#4CAF50' : '#e74c3c';
+            DOM.chatBox.appendChild(messageElement);
+            DOM.chatBox.scrollBy(0, DOM.chatBox.scrollHeight);
+
+            // Riproduci suono di conferma (se i suoni sono abilitati)
+            if (soundEnabled) {
+                playSound("notification", 0.3);
+            }
+        });
+
+        updateSoundToggle();
 
         // ----------------------
         // GESTIONE GAME
@@ -374,6 +464,9 @@
                 DOM.chatBox.scrollBy(0, DOM.chatBox.scrollHeight);
                 msgSent = false;
             }
+
+            // Riproduci suono di notifica per i messaggi chat
+            playSound("notification", 0.3);
         });
 
         socket.on("update-player-hover", (character, playerUsername, phaseType) => {
@@ -396,12 +489,14 @@
         });
 
         socket.on("update-game-state", (blueSideBans, redSideBans, blueSidePicks, redSidePicks, currentPhase, currentUsername) => {
+
             if (Array.isArray(blueSideBans)) {
                 blueSideBans.forEach((char, i) => {
                     const slot = document.getElementById(`blue-ban-row-slot-${i}`);
                     if (slot) {
                         slot.className = "blue-ban-row-slot";
                         slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character ban"/>` : "";
+
                     }
                 });
             }
@@ -411,6 +506,7 @@
                     if (slot) {
                         slot.className = "red-ban-row-slot";
                         slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character ban"/>` : "";
+
                     }
                 });
             }
@@ -420,6 +516,7 @@
                     if (slot) {
                         slot.className = "blue-pick-slot";
                         slot.innerHTML = char ? `<img src="${getImageLinkByName(char)}" title="${char}" class="mini-character"/>` : "";
+
                     }
                 });
             }
@@ -432,9 +529,34 @@
                     }
                 });
             }
+
+            const oldPicksAndBans = [...allPicksAndBans];
             allPicksAndBans = [...blueSideBans, ...redSideBans, ...blueSidePicks, ...redSidePicks];
             updateCharactersList(allPicksAndBans);
-            DOM.currentPhaseText.innerHTML = generatePhaseText(currentPhase, currentUsername);
+
+            // 🔊 Controllo differenze
+            const newlyAdded = allPicksAndBans.filter(c => !oldPicksAndBans.includes(c));
+            if (newlyAdded.length > 0) {
+                // Controllo se è stato un ban o un pick
+                const newChar = newlyAdded[0];
+                if (blueSideBans.includes(newChar) || redSideBans.includes(newChar)) {
+                    playSound("ban", 0.6);
+                } else if (blueSidePicks.includes(newChar) || redSidePicks.includes(newChar)) {
+                    playSound("pick", 0.6);
+                }
+            }
+
+            const oldPhaseText = DOM.currentPhaseText.innerHTML;
+            const newPhaseText = generatePhaseText(currentPhase, currentUsername);
+            DOM.currentPhaseText.innerHTML = newPhaseText;
+
+            if (oldPhaseText !== newPhaseText) {
+                playSound("phaseChange", 0.4);
+            }
+
+            if (currentUsername === username && (currentPhase === "ban" || currentPhase === "pick")) {
+                playSound("userTurn", 0.8);
+            }
         });
 
         function updateCharactersList(characters, removeOnClick = true) {
@@ -470,6 +592,7 @@
             } else {
                 DOM.chatInput.blur();
             }
+            playSound("click", 0.3);
         });
 
         document.addEventListener("click", (e) => {
@@ -486,6 +609,7 @@
                 if (message) {
                     socket.emit("send-chat-message", roomId, message);
                     DOM.chatInput.value = "";
+                    playSound("click", 0.3);
                 }
                 e.preventDefault();
                 msgSent = true;
@@ -552,10 +676,14 @@
             createTeamSlots(DOM.redSideBansContainer, bansNumber, "red-ban-row");
             createTeamSlots(DOM.blueSidePicksContainer, teamsNumber * 4, "blue-pick");
             createTeamSlots(DOM.redSidePicksContainer, teamsNumber * 4, "red-pick");
+
+            // Suono di inizio gioco
+            playSound("phaseChange", 0.5);
         });
 
         socket.on("user-disconnected", (username) => {
             console.log(username + " disconnected");
+            playSound("notification", 0.3);
         });
 
         // ----------------------
@@ -584,6 +712,11 @@
                             img.addEventListener("click", () => {
                                 selectedCharacter = img.id;
                                 socket.emit("hovered-character", selectedCharacter, username, roomId);
+                                playSound("click", 0.4);
+                            });
+
+                            img.addEventListener("mouseenter", () => {
+                                playSound("hover", 0.2);
                             });
 
                             savedCharacters.push({ name: c.Name, imageLink: c.ImageLink, stars: c.Stars });
@@ -594,9 +727,13 @@
 
                 DOM.searchBar.addEventListener("input", (e) => {
                     renderList(e.target.value);
+                    if (e.target.value.length > 0) {
+                        playSound("hover", 0.1);
+                    }
                 });
 
             } catch (err) {
+                playSound("error", 0.5);
                 console.error("Error while loading character:", err);
             }
         }
@@ -615,10 +752,34 @@
         function submitCharacter() {
             if (selectedCharacter == null) {
                 alert("Devi prima selezionare un personaggio!");
+                playSound("error", 0.5);
                 return;
             }
             socket.emit("selected-character", selectedCharacter, username, roomId);
+            playSound("click", 0.5);
         }
+
+        // Aggiungi toggle per i suoni (premendo 'M')
+        document.addEventListener('keydown', function (e) {
+            if ((e.key === 'm' || e.key === 'M') && document.activeElement !== DOM.chatInput) {
+                soundEnabled = !soundEnabled;
+                updateSoundToggle();
+
+                const message = `Suoni ${soundEnabled ? 'abilitati' : 'disabilitati'}`;
+
+                // Mostra messaggio nella chat
+                const messageElement = document.createElement("div");
+                messageElement.textContent = message;
+                messageElement.style.color = soundEnabled ? '#4CAF50' : '#e74c3c';
+                DOM.chatBox.appendChild(messageElement);
+                DOM.chatBox.scrollBy(0, DOM.chatBox.scrollHeight);
+
+                // Riproduci suono di conferma (se i suoni sono abilitati)
+                if (soundEnabled) {
+                    playSound("notification", 0.3);
+                }
+            }
+        });
     </script>
 </body>
 
