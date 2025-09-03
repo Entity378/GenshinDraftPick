@@ -4,6 +4,8 @@ const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const Database = require("better-sqlite3");
+const { connect } = require("http2");
+const { connected } = require("process");
 
 const app = express();
 const server = http.createServer(app);
@@ -44,7 +46,11 @@ app.get("/create", (req, res) => {
     const username = req.query.username;
 
     if (username) {
-        rooms[roomId] = [];
+        rooms[roomId] = {
+            host: username,
+            participants: []
+        };
+
         res.redirect(`/room/${roomId}?username=${username}`);
     } else {
         res.send(
@@ -67,7 +73,7 @@ app.get("/room/:roomId", (req, res) => {
                 window.location.href = "/";
             </script>`
         );
-    } else if (rooms[roomId].find(user => user.username === username)) {
+    } else if (rooms[roomId].participants.find(user => user.username === username)) {
         res.send(
             `<script>
                 alert("Username già preso in questa stanza.");
@@ -111,10 +117,10 @@ io.on("connection", (socket) => {
         if (!rooms[roomId]) {
             console.log(`${username} (${socket.id}) ha provato ad unirsi in una stanza non esistente con id ${roomId}`);
         } else {
-            rooms[roomId].push({ id: socket.id, username: username });
+            rooms[roomId].participants.push({ id: socket.id, username: username });
             socket.join(roomId);
-            console.log(`${username} (${socket.id}) si è unito alla stanza ${roomId}`);
-            io.to(roomId).emit("update-participants", rooms[roomId]);
+            console.log(`${username} (${socket.id}) si è unito alla stanza ${roomId} creata da ${rooms[roomId].host}`);
+            io.to(roomId).emit("update-participants", rooms[roomId].participants, rooms[roomId].host);
         }
     });
 
@@ -125,9 +131,11 @@ io.on("connection", (socket) => {
             socket.emit("error", "I capitani dei team non possono essere uguali.");
             return;
         }
-        if (rooms[roomId][0].username == username) {
+        if (rooms[roomId].host == username) {
             games[roomId] = {
-                participants: [...rooms[roomId]],  // Copia i partecipanti
+                participants: [...rooms[roomId].participants],  // Copia i partecipanti
+                host: rooms[roomId].host,                       // Mantieni l'host originale
+                bothCaptainsPresent: true,
                 blueSideUsername: blueSideUsername,
                 redSideUsername: redSideUsername,
                 bansNumber: bansNumber,
@@ -185,12 +193,43 @@ io.on("connection", (socket) => {
                 io.to(roomId).emit("update-participants", connectedGames[roomId]);
                 io.to(roomId).emit("user-disconnected", username);
 
-                if (connectedGames[roomId].length === 0) {
+                const game = games[roomId];
+                // Se è un game attivo, controlla se esce un capitano
+                if ((username === game.blueSideUsername || username === game.redSideUsername) && game.bothCaptainsPresent) {
+                    game.bothCaptainsPresent = false;
+                    console.log(`${username} (${socket.id}) era un capitano e ha lasciato la partita ${roomId}. La partita verrà terminata.`);
+
+                    var nextHost;
+                    if (connectedGames[roomId].find(user => user.username === game.host)) {
+                        nextHost = game.host; // mantieni l'host originale se è ancora connesso
+                    } else if (connectedGames[roomId].find(user => user.username === game.blueSideUsername)) {
+                        nextHost = game.blueSideUsername; // altrimenti assegna l'host al capitano blu se è connesso
+                    } else if (connectedGames[roomId].find(user => user.username === game.redSideUsername)) {
+                        nextHost = game.redSideUsername; // altrimenti assegna l'host al capitano rosso se è connesso
+                    } else if (connectedGames[roomId].length > 0) {
+                        nextHost = connectedGames[roomId][0].username; // altrimenti assegna l'host a un altro partecipante qualsiasi
+                    }
+                    //var nextHost = game.host ? game.host : game.blueSideUsername ? game.blueSideUsername : game.redSideUsername ? game.redSideUsername : remainingUsers[0].username;
+                    rooms[roomId] = {
+                        host: nextHost,   // mantieni l’host originale o uno dei 2 capitani rimasti
+                        participants: []
+                    }
+                    console.log(`Creata stanza ${roomId} ora ha come host ${rooms[roomId].host}.`);
+                    io.to(roomId).emit("redirect-to-lobby");
+                    io.to(roomId).emit("update-participants", rooms[roomId].participants, rooms[roomId].host);
+                }
+                if (connectedGames[roomId].length === 0 && !game.bothCaptainsPresent) {
                     delete connectedGames[roomId];
                     delete games[roomId];
                 }
                 break;
             }
+
+            if (connectedGames[roomId] && connectedGames[roomId].length === 0) {
+                delete connectedGames[roomId];
+                delete games[roomId];
+            }
+            break;
         }
     });
 
@@ -203,14 +242,14 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         for (const roomId in rooms) {
-            const userIndex = rooms[roomId].findIndex(user => user.id === socket.id);
+            const userIndex = rooms[roomId].participants.findIndex(user => user.id === socket.id);
             if (userIndex !== -1) {
-                const username = rooms[roomId][userIndex].username;
-                rooms[roomId].splice(userIndex, 1);
-                io.to(roomId).emit("update-participants", rooms[roomId]);
+                const username = rooms[roomId].participants[userIndex].username;
+                rooms[roomId].participants.splice(userIndex, 1);
+                io.to(roomId).emit("update-participants", rooms[roomId].participants, rooms[roomId].host);
                 io.to(roomId).emit("user-disconnected", username);
 
-                if (rooms[roomId].length === 0) {
+                if (rooms[roomId].participants.length === 0) {
                     delete rooms[roomId];
                 }
                 break;

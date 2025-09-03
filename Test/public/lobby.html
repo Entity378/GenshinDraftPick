@@ -203,7 +203,7 @@
 
         socket.emit("join-room", roomId, username);
 
-        socket.on("update-participants", (participants) => {
+        socket.on("update-participants", (participants, hostUsername) => {
             let blueUsername = DOM.blueSideSelect.value;
             let redUsername = DOM.redSideSelect.value;
             let isBlueSideUsernamePresent = false;
@@ -229,9 +229,6 @@
                 DOM.blueSideSelect.appendChild(optionItemBlue);
                 DOM.redSideSelect.appendChild(optionItemRed);
 
-                if (index === 0 && user.username === username) {
-                    DOM.hostOptions.style.display = "block";
-                }
                 if (user.username === blueUsername) {
                     isBlueSideUsernamePresent = true;
                 }
@@ -239,6 +236,10 @@
                     isRedSideUsernamePresent = true;
                 }
             });
+
+            if (hostUsername === username) {
+                DOM.hostOptions.style.display = "block";
+            }
 
             if (isBlueSideUsernamePresent) {
                 DOM.blueSideSelect.value = blueUsername;
