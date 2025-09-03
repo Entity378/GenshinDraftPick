@@ -1,13 +1,14 @@
 {
-  "name": "zoom-clone",
+  "name": "genshin-draft-pick",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Genshin Impact Draft Pick System",
+  "main": "server.js",
   "scripts": {
-    "devStart": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Entity378",
   "license": "ISC",
   "dependencies": {
     "better-sqlite3": "^12.2.0",

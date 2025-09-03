@@ -1,0 +1,343 @@
+/* I tuoi stili esistenti rimangono invariati */
+.main-layout {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    height: 100vh;
+    width: 100vw;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.side-container {
+    width: 20%;
+    background-color: rgba(30, 30, 30, 0.9);
+    border-radius: 12px;
+    padding: 15px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.game-container {
+    flex: 1;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#characters-box {
+    margin-top: 20px;
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    background-color: #1e1e1e;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#characters-list {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 20px;
+    justify-items: center;
+    align-items: start;
+}
+
+.character {
+    border-radius: 10px;
+    border: 2px solid #aaa;
+    transition: transform 0.2s ease;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.character:hover {
+    transform: scale(1.1);
+}
+
+.ban {
+    filter: grayscale(1);
+}
+
+.star-5 {
+    border-color: gold;
+    box-shadow: 0 0 10px gold;
+}
+
+.star-4 {
+    border-color: purple;
+    box-shadow: 0 0 10px purple;
+}
+
+.disabled {
+    border-radius: 10px;
+    border: 2px solid #aaa;
+    transition: transform 0.2s ease;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-color: red;
+    filter: grayscale(1);
+}
+
+.blue-team-bans,
+.red-team-bans {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.blue-ban-row-slot,
+.red-ban-row-slot {
+    height: 100px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background-color: rgba(40, 40, 40, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.blue-ban-row-slot {
+    border-color: #3498db;
+    box-shadow: 0 0 10px #3498db;
+}
+
+.red-ban-row-slot {
+    border-color: #e74c3c;
+    box-shadow: 0 0 10px #e74c3c;
+}
+
+.blue-team-picks,
+.red-team-picks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ban-row,
+.pick-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.blue-pick-slot,
+.red-pick-slot {
+    height: 100px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background-color: rgba(40, 40, 40, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blue-pick-slot {
+    border-color: #3498db;
+    box-shadow: 0 0 10px #3498db;
+}
+
+.red-pick-slot {
+    border-color: #e74c3c;
+    box-shadow: 0 0 10px #e74c3c;
+}
+
+.mini-character {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.submit-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    align-self: center;
+}
+
+.submit-btn:hover {
+    background-color: #45a049;
+}
+
+.current-phase {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #f1c40f;
+}
+
+#chat-box-container {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: 19.75%;
+    max-height: 300px;
+    background-color: rgba(30, 30, 30, 0.6);
+    border-radius: 12px;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    transition: opacity 0.3s;
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+#chat-box-container:not(.active) {
+    height: 150px;
+    opacity: 0.5;
+}
+
+#chat-box-container.active {
+    height: 250px;
+    opacity: 1;
+}
+
+#chat-box {
+    background: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    color: #e0e0e0;
+    font-size: 0.85em;
+    line-height: 1.2em;
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+#search-bar {
+    display: block;
+    margin: 0 auto 15px auto;
+    padding: 8px;
+    width: 60%;
+}
+
+#chat-input {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 0.9em;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #2a2a2a;
+    color: #e0e0e0;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.bans-text,
+.blue-pick-text,
+.red-pick-text {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.6);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+    text-align: center;
+}
+
+.bans-text {
+    background-color: rgba(120, 120, 120, 0.8);
+}
+
+.blue-pick-text {
+    background-color: rgba(20, 100, 200, 0.8);
+}
+
+.red-pick-text {
+    background-color: rgba(200, 20, 20, 0.8);
+}
+
+/* Audio controls nascosti */
+.audio-elements {
+    display: none;
+}
+
+/* Pulsante per attivare/disattivare i suoni */
+.sound-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(30, 30, 30, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 20px;
+}
+
+/* Animazione flash per il lato blu */
+@keyframes flash-blue {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px #3498db, inset 0 0 20px #3498db;
+    }
+
+    50% {
+        box-shadow: 0 0 40px #3498db, inset 0 0 40px #3498db;
+    }
+}
+
+/* Animazione flash per il lato rosso */
+@keyframes flash-red {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px #e74c3c, inset 0 0 20px #e74c3c;
+    }
+
+    50% {
+        box-shadow: 0 0 40px #e74c3c, inset 0 0 40px #e74c3c;
+    }
+}
+
+.flash-blue {
+    animation: flash-blue 1s infinite alternate;
+}
+
+.flash-red {
+    animation: flash-red 1s infinite alternate;
+}

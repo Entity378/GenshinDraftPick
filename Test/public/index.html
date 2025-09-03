@@ -5,89 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="/main_styles.css">
-    <style>
-        .index-container {
-            max-width: 400px;
-            margin: 40px auto;
-            background: #1e1e1e;
-            padding: 30px;
-        }
-
-        .index-container input[type="text"] {
-            display: block;
-            width: 80%;
-            margin: 15px auto;
-            padding: 10px 15px;
-            background: #2a2a2a;
-            border: 1px solid #555;
-            border-radius: 6px;
-            font-size: 1em;
-            color: #e0e0e0;
-        }
-
-        .index-container button {
-            margin: 10px;
-            padding: 10px 25px;
-            background: #0078d7;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            cursor: pointer;
-        }
-
-        .index-container button:hover {
-            background: #005fa3;
-        }
-
-        .index-container input[type="text"]::placeholder {
-            color: #777;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/index.css">
 </head>
 
 <body class="index-page">
     <div class="container index-container">
-        <input type="text" id="username" placeholder="Inserisci nome" autocomplete="off">
-        <input type="text" id="roomId" placeholder="Inserisci codice" autocomplete="off">
+        <input type="text" id="username" placeholder="Inserisci nome" autocomplete="off" class="input">
+        <input type="text" id="roomId" placeholder="Inserisci codice" autocomplete="off" class="input">
         <center>
-            <button onclick="createRoom()">Crea stanza</button>
-            <button onclick="joinRoom()">Unisciti</button>
+            <button onclick="createRoom()" class="btn btn-primary">Crea stanza</button>
+            <button onclick="joinRoom()" class="btn btn-primary">Unisciti</button>
         </center>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const DOM = {
-            get username() { return document.getElementById("username"); },
-            get roomId() { return document.getElementById("roomId"); }
-        };
-
-        function createRoom() {
-            const username = DOM.username.value;
-            if (username) {
-                window.location.href = `/create?username=${username}`;
-            } else {
-                alert("Per favore, inserisci un nome utente.");
-            }
-        }
-
-        function joinRoom() {
-            const username = DOM.username.value;
-            const roomId = DOM.roomId.value;
-            if (username && roomId) {
-                window.location.href = `/room/${roomId}?username=${username}`;
-            } else {
-                alert("Per favore, inserisci un nome utente e un ID di stanza.");
-            }
-        }
-
-        socket.on("error", (message) => {
-            alert(message);
-        });
-    </script>
+    <script src="/js/socket.js"></script>
+    <script src="/js/index.js"></script>
 </body>
 
 </html>
