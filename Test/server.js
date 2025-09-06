@@ -74,7 +74,17 @@ app.get("/game/:roomId", (req, res) => {
 app.get("/characters", (req, res) => {
     try {
         const characters = db
-            .prepare("SELECT * FROM character ORDER BY Stars DESC, Name ASC")
+            .prepare("SELECT " +
+                "c.Name, " +
+                "c.Limited, " +
+                "c.Stars, " +
+                "c.ImageLink , " +
+                "e.Element, " +
+                "w.WeaponType " +
+                "FROM character c " +
+                "JOIN element e ON c.Element = e.Element " +
+                "JOIN weapontype w ON c.WeaponType = w.WeaponType " +
+                "ORDER BY c.Stars DESC, c.Name ASC;")
             .all();
         res.json(characters);
     } catch (err) {
@@ -83,6 +93,29 @@ app.get("/characters", (req, res) => {
     }
 });
 
+app.get("/elements", (req, res) => {
+    try {
+        const elements = db
+            .prepare("SELECT * FROM element ORDER BY Element ASC")
+            .all();
+        res.json(elements);
+    } catch (err) {
+        console.error("Errore query:", err);
+        res.status(500).send("Errore interno");
+    }
+});
+
+app.get("/weaponTypes", (req, res) => {
+    try {
+        const weaponTypes = db
+            .prepare("SELECT * FROM weapontype ORDER BY WeaponType ASC")
+            .all();
+        res.json(weaponTypes);
+    } catch (err) {
+        console.error("Errore query:", err);
+        res.status(500).send("Errore interno");
+    }
+});
 // Socket.io events
 io.on("connection", (socket) => {
     console.log("Nuovo client connesso:", socket.id);

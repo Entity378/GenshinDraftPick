@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
         redUsernameText: document.getElementById("red-username"),
         blueUsernameText: document.getElementById("blue-username"),
         charactersList: document.getElementById("characters-list"),
+        elementsList: document.getElementById("elements-list"),
+        weaponTypesList: document.getElementById("weapon-types-list"),
         searchBar: document.getElementById("search-bar"),
         submitBtn: document.getElementById("submit-btn"),
         soundToggle: document.getElementById("sound-toggle")
@@ -22,9 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let allPicksAndBans = [];
     let msgSent = false;
     let selectedCharacter = null;
+    let oldSelectedElement = null;
+    let selectedElement = null;
+    let oldSelectedWeaponType = null;
+    let selectedWeaponType = null;
     let bansNumber = null;
     let teamsNumber = null;
     let savedCharacters = [];
+    let savedElements = [];
     let soundEnabled = true;
 
     const soundManager = {
@@ -61,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         bindEvents();
         loadCharacters();
+        loadElements();
+        loadWeaponTypes();
         socket.emit("join-game", roomId, username);
         updateSoundToggle();
     }
@@ -354,40 +363,43 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(username + " disconnected");
     });
 
+    function renderList(filter = "") {
+        DOM.charactersList.innerHTML = "";
+        savedCharacters
+            .filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+            .filter(c => !selectedElement || c.element === selectedElement)
+            .filter(c => !selectedWeaponType || c.weaponType === selectedWeaponType)
+            .forEach((c) => {
+                const img = document.createElement("img");
+                img.src = c.imageLink;
+                img.id = c.name;
+                img.title = c.name;
+                if (allPicksAndBans.includes(c.name)) {
+                    img.className = "disabled";
+                } else {
+                    img.className = `character star-${c.stars}`;
+                    img.addEventListener("click", () => {
+                        selectedCharacter = img.id;
+                        socket.emit("hovered-character", selectedCharacter, username, roomId);
+                        soundManager.play("click", 0.4);
+                    });
+
+                    img.addEventListener("mouseenter", () => {
+                        soundManager.play("hover", 0.2);
+                    });
+                }
+                DOM.charactersList.appendChild(img);
+            });
+    }
+
     async function loadCharacters() {
         try {
             const res = await fetch("/characters");
             const characters = await res.json();
 
-            function renderList(filter = "") {
-                DOM.charactersList.innerHTML = "";
-                characters
-                    .filter(c => c.Name.toLowerCase().includes(filter.toLowerCase()))
-                    .forEach((c) => {
-                        const img = document.createElement("img");
-                        img.src = c.ImageLink;
-                        img.id = c.Name;
-                        img.title = c.Name;
-                        if (allPicksAndBans.includes(c.Name)) {
-                            img.className = "disabled";
-                        } else {
-                            img.className = `character star-${c.Stars}`;
-                            img.addEventListener("click", () => {
-                                selectedCharacter = img.id;
-                                socket.emit("hovered-character", selectedCharacter, username, roomId);
-                                soundManager.play("click", 0.4);
-                            });
-
-                            img.addEventListener("mouseenter", () => {
-                                soundManager.play("hover", 0.2);
-                            });
-                        }
-                        DOM.charactersList.appendChild(img);
-                        savedCharacters.push({ name: c.Name, imageLink: c.ImageLink, stars: c.Stars });
-                    });
-            }
-
-            renderList();
+            characters.forEach((c) => {
+                savedCharacters.push({ name: c.Name, imageLink: c.ImageLink, stars: c.Stars, element: c.Element, weaponType: c.WeaponType });
+            });
 
             DOM.searchBar.addEventListener("input", (e) => {
                 renderList(e.target.value);
@@ -395,10 +407,96 @@ document.addEventListener('DOMContentLoaded', () => {
                     soundManager.play("hover", 0.1);
                 }
             });
-
+            renderList();
         } catch (err) {
             soundManager.play("error", 0.5);
             console.error("Error while loading character:", err);
+        }
+    }
+
+    async function loadElements() {
+        try {
+            const res = await fetch("/elements");
+            const elements = await res.json();
+
+            DOM.elementsList.innerHTML = "";
+            elements.forEach((e) => {
+                const img = document.createElement("img");
+                img.src = e.ImageLink;
+                img.id = e.Element;
+                img.title = e.Element;
+                img.className = `element ${e.Element}`;
+                img.addEventListener("click", () => {
+                    if (selectedElement === img.id) {
+                        selectedElement = null;
+                        img.classList.remove("selected");
+                    }
+                    else {
+                        oldSelectedElement = selectedElement;
+                        if (document.getElementById(oldSelectedElement))
+                            document.getElementById(oldSelectedElement).classList.remove("selected");
+
+                        selectedElement = img.id;
+                        img.classList.add("selected");
+                    }
+                    soundManager.play("click", 0.4);
+                    renderList(DOM.searchBar.value);
+                });
+
+                img.addEventListener("mouseenter", () => {
+                    soundManager.play("hover", 0.2);
+                });
+
+                DOM.elementsList.appendChild(img);
+                savedElements.push({ name: e.Element, imageLink: e.ImageLink });
+            });
+
+        } catch (err) {
+            soundManager.play("error", 0.5);
+            console.error("Error while loading element:", err);
+        }
+    }
+
+    async function loadWeaponTypes() {
+        try {
+            const res = await fetch("/weaponTypes");
+            const weaponTypes = await res.json();
+
+            DOM.weaponTypesList.innerHTML = "";
+            weaponTypes.forEach((w) => {
+                const img = document.createElement("img");
+                img.src = w.ImageLink;
+                img.id = w.WeaponType;
+                img.title = w.WeaponType;
+                img.className = `weapon-type ${w.WeaponType}`;
+                img.addEventListener("click", () => {
+                    if (selectedWeaponType === img.id) {
+                        selectedWeaponType = null;
+                        img.classList.remove("selected");
+                    }
+                    else {
+                        oldSelectedWeaponType = selectedWeaponType;
+                        if (document.getElementById(oldSelectedWeaponType))
+                            document.getElementById(oldSelectedWeaponType).classList.remove("selected");
+
+                        selectedWeaponType = img.id;
+                        img.classList.add("selected");
+                    }
+                    soundManager.play("click", 0.4);
+                    renderList(DOM.searchBar.value);
+                });
+
+                img.addEventListener("mouseenter", () => {
+                    soundManager.play("hover", 0.2);
+                });
+
+                DOM.weaponTypesList.appendChild(img);
+                savedElements.push({ name: w.WeaponType, imageLink: w.ImageLink });
+            });
+
+        } catch (err) {
+            soundManager.play("error", 0.5);
+            console.error("Error while loading element:", err);
         }
     }
 

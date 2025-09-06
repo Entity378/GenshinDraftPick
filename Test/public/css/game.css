@@ -35,7 +35,6 @@
 }
 
 #characters-box {
-    margin-top: 20px;
     padding: 10px;
     border: 2px solid #333;
     border-radius: 10px;
@@ -44,12 +43,21 @@
     overflow-y: auto;
 }
 
-#characters-list {
+#characters-list,
+#weapon-types-list {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 20px;
     justify-items: center;
     align-items: start;
+}
+
+#elements-list,
+#weapon-types-list {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
 }
 
 .character {
@@ -59,16 +67,33 @@
     width: auto;
     height: auto;
     max-width: 100%;
-    max-height: 100%;
     object-fit: contain;
 }
 
-.character:hover {
+.element,
+.weapon-type {
+    border-radius: 10px;
+    border: 2px solid #aaa;
+    transition: transform 0.2s ease;
+    width: auto;
+    height: auto;
+    max-width: 5%;
+    object-fit: contain;
+    filter: grayscale(1);
+}
+
+.character:hover,
+element:hover {
     transform: scale(1.1);
 }
 
 .ban {
     filter: grayscale(1);
+}
+
+.selected {
+    box-shadow: 0 0 15px white;
+    filter: none;
 }
 
 .star-5 {
@@ -187,7 +212,7 @@
 
 .current-phase {
     text-align: center;
-    margin-top: 15px;
+    margin-bottom: 15px;
     font-size: 18px;
     font-weight: bold;
     color: #f1c40f;
